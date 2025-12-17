@@ -11,7 +11,7 @@
 [Unit]
 Description=Podman n8n-server.service
 BindsTo=n8n.service
-After=n8n.service n8n-pgsql.service n8n-redis.service
+After=n8n.service n8n-pgsql.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -41,10 +41,6 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/n8n-server.pid \
     --env N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0 \
     --env N8N_RUNNERS_AUTH_TOKEN=MySharedSecret \
     --env N8N_NATIVE_PYTHON_RUNNER=true \
-    --env EXECUTIONS_MODE=queue \
-    --env QUEUE_BULL_REDIS_HOST=127.0.0.1 \
-    --env QUEUE_BULL_REDIS_PORT=6379 \
-    --env QUEUE_HEALTH_CHECK_ACTIVE=true \
     --env N8N_EMAIL_MODE=smtp \
     --env N8N_SMTP_SSL=false \
     --env N8N_SMTP_HOST=${SMTP_HOST} \

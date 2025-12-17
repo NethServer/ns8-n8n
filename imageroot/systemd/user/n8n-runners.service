@@ -11,7 +11,7 @@
 [Unit]
 Description=Podman n8n-runners.service
 BindsTo=n8n.service
-After=n8n.service n8n-pgsql.service n8n-redis.service n8n-server.service
+After=n8n.service n8n-pgsql.service n8n-server.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
