@@ -18,7 +18,6 @@ data = json.load(sys.stdin)
 host = data.get("host", "")
 n8n_URL = "https://"+host
 
-
 # Db Config
 
 POSTGRES_DB = data.get("POSTGRES_DB","n8n")
@@ -38,16 +37,5 @@ db_config = {
 }
 agent.write_envfile('database.env', db_config)
 
-# Talk with agent using file descriptor.
-
-# Setup configuration from user input.
-
-# Setup PHP with safe defaults
-agent.set_env("PHP_ENABLE_OPCACHE", "1")
-agent.set_env("PHP_MEMORY_LIMIT", "512M")
+# Set N8N_HOST
 agent.set_env("N8N_HOST", host)
-
-
-# Make sure everything is saved inside the environment file
-# just before starting systemd unit
-agent.dump_env()
