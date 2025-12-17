@@ -96,3 +96,5 @@ To setup the translation process:
 
 ## To Do
 
+- Add secrets management
+- Add changeable timezone
