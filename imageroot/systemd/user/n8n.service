@@ -10,8 +10,8 @@
 
 [Unit]
 Description=Podman n8n.service
-Requires=n8n-redis.service n8n-pgsql.service n8n-server.service
-Before=n8n-redis.service n8n-pgsql.service n8n-server.service
+Requires=n8n-redis.service n8n-pgsql.service n8n-server.service n8n-runners.service
+Before=n8n-redis.service n8n-pgsql.service n8n-server.service n8n-runners.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
