@@ -11,7 +11,7 @@ exec 1>&2 # Redirect any output to the journal (stderr)
 mkdir -vp restore
 cat - >restore/n8n_restore.sh <<'EOS'
 # Read dump file from standard input:
-pg_restore --no-owner --no-privileges -U n8n -d n8n
+pg_restore --no-owner --no-privileges -U postgres -d n8n
 ec=$?
 docker_temp_server_stop
 exit $ec
