@@ -39,6 +39,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
+	--label="org.nethserver.min-core=3.12.4-0" \
     --label="org.nethserver.images=docker.io/library/postgres:16.11 docker.io/n8nio/n8n:2.0.2 docker.io/n8nio/runners:2.0.2" \
     --label="org.nethserver.tcp-ports-demand=1" \
     "${container}"

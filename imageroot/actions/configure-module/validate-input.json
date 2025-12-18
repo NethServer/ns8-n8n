@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "configure n8n settings",
     "$id": "http://nethserver.org/json-schema/task/input/n8n/configure-module",
-    "description": "Condifure n8n settings",
+    "description": "Configure n8n settings",
     "examples": [
         {
             "host": "n8n.domain.org",
@@ -18,17 +18,18 @@
         "host": {
             "type": "string",
             "description": "Host name for the application, like 'n8n.domain.org'",
-            "format": "idn-hostname"
+            "format": "hostname",
+            "pattern": "\\."
         },
-        "lets_encrypt": {
+	"lets_encrypt": {
             "type": "boolean",
             "title": "Let's Encrypt certificate",
             "description": "Request a valid Let's Encrypt certificate."
         },
-        "http2https": {
+	"http2https": {
             "type": "boolean",
             "title": "HTTP to HTTPS redirection",
             "description": "Redirect all the HTTP requests to HTTPS"
         }
-        }
     }
+}

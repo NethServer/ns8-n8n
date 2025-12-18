@@ -1,23 +1,27 @@
+<!--
+  Copyright (C) 2022 Nethesis S.r.l.
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
 <template>
-  <div class="bx--grid bx--grid--full-width">
-    <div class="bx--row">
-      <div class="bx--col-lg-16 page-title">
+  <cv-grid fullWidth>
+    <cv-row>
+      <cv-column class="page-title">
         <h2>{{ $t("settings.title") }}</h2>
-      </div>
-    </div>
-    <div v-if="error.getConfiguration" class="bx--row">
-      <div class="bx--col">
+      </cv-column>
+    </cv-row>
+    <cv-row v-if="error.getConfiguration">
+      <cv-column>
         <NsInlineNotification
           kind="error"
           :title="$t('action.get-configuration')"
           :description="error.getConfiguration"
           :showCloseButton="false"
         />
-      </div>
-    </div>
-    <div class="bx--row">
-      <div class="bx--col-lg-16">
-        <cv-tile :light="true">
+      </cv-column>
+    </cv-row>
+    <cv-row>
+      <cv-column>
+        <cv-tile light>
           <cv-form @submit.prevent="configureModule">
             <cv-text-input
               :label="$t('settings.n8n_fqdn')"
@@ -29,21 +33,53 @@
               ref="host"
             >
             </cv-text-input>
-
-            <cv-toggle
+            <NsToggle
               value="letsEncrypt"
-              :label="$t('settings.lets_encrypt')"
+              :label="core.$t('apps_lets_encrypt.request_https_certificate')"
               v-model="isLetsEncryptEnabled"
-              :disabled="loading.getConfiguration || loading.configureModule"
+              :disabled="stillLoading"
               class="mg-bottom"
             >
+              <template #tooltip>
+                <div class="mg-bottom-sm">
+                  {{ core.$t("apps_lets_encrypt.lets_encrypt_tips") }}
+                </div>
+                <div class="mg-bottom-sm">
+                  <cv-link @click="goToCertificates">
+                    {{ core.$t("apps_lets_encrypt.go_to_tls_certificates") }}
+                  </cv-link>
+                </div>
+              </template>
               <template slot="text-left">{{
                 $t("settings.disabled")
               }}</template>
               <template slot="text-right">{{
                 $t("settings.enabled")
               }}</template>
-            </cv-toggle>
+            </NsToggle>
+            <cv-row
+              v-if="isLetsEncryptCurrentlyEnabled && !isLetsEncryptEnabled"
+            >
+              <cv-column>
+                <NsInlineNotification
+                  kind="warning"
+                  :title="
+                    core.$t('apps_lets_encrypt.lets_encrypt_disabled_warning')
+                  "
+                  :description="
+                    core.$t(
+                      'apps_lets_encrypt.lets_encrypt_disabled_warning_description',
+                      {
+                        node: this.status.node_ui_name
+                          ? this.status.node_ui_name
+                          : this.status.node,
+                      }
+                    )
+                  "
+                  :showCloseButton="false"
+                />
+              </cv-column>
+            </cv-row>
             <cv-toggle
               value="httpToHttps"
               :label="$t('settings.http_to_https')"
@@ -58,16 +94,55 @@
                 $t("settings.enabled")
               }}</template>
             </cv-toggle>
-            <div v-if="error.configureModule" class="bx--row">
-              <div class="bx--col">
+            <!-- advanced options 
+            <cv-accordion ref="accordion" class="maxwidth mg-bottom">
+              <cv-accordion-item :open="toggleAccordion[0]">
+                <template slot="title">{{ $t("settings.advanced") }}</template>
+                <template slot="content"> </template>
+              </cv-accordion-item>
+            </cv-accordion> -->
+            <cv-row v-if="error.configureModule">
+              <cv-column>
                 <NsInlineNotification
                   kind="error"
                   :title="$t('action.configure-module')"
                   :description="error.configureModule"
                   :showCloseButton="false"
                 />
-              </div>
-            </div>
+              </cv-column>
+            </cv-row>
+            <cv-row v-if="error.getStatus">
+              <cv-column>
+                <NsInlineNotification
+                  kind="error"
+                  :title="$t('action.get-status')"
+                  :description="error.getStatus"
+                  :showCloseButton="false"
+                />
+              </cv-column>
+            </cv-row>
+            <cv-row v-if="validationErrorDetails.length">
+              <cv-column>
+                <NsInlineNotification
+                  kind="error"
+                  :title="
+                    core.$t('apps_lets_encrypt.cannot_obtain_certificate')
+                  "
+                  :showCloseButton="false"
+                >
+                  <template #description>
+                    <div class="flex flex-col gap-2">
+                      <div
+                        v-for="(detail, index) in validationErrorDetails"
+                        :key="index"
+                      >
+                        {{ detail }}
+                      </div>
+                    </div>
+                  </template>
+                </NsInlineNotification>
+              </cv-column>
+            </cv-row>
             <NsButton
               kind="primary"
               :icon="Save20"
@@ -77,9 +152,9 @@
             >
           </cv-form>
         </cv-tile>
-      </div>
-    </div>
-  </div>
+      </cv-column>
+    </cv-row>
+  </cv-grid>
 </template>
 
 <script>
@@ -90,11 +165,18 @@ import {
   UtilService,
   TaskService,
   IconService,
+  PageTitleService,
 } from "@nethserver/ns8-ui-lib";
 
 export default {
   name: "Settings",
-  mixins: [TaskService, IconService, UtilService, QueryParamService],
+  mixins: [
+    TaskService,
+    IconService,
+    UtilService,
+    QueryParamService,
+    PageTitleService,
+  ],
   pageTitle() {
     return this.$t("settings.title") + " - " + this.appName;
   },
@@ -103,32 +185,41 @@ export default {
       q: {
         page: "settings",
       },
+      status: {},
+      validationErrorDetails: [],
       urlCheckInterval: null,
       host: "",
-      n8n_ADMIN_USER: "",
-      n8n_ADMIN_PASSWORD: "",
       isLetsEncryptEnabled: false,
-      isHttpToHttpsEnabled: false,
+      isLetsEncryptCurrentlyEnabled: false,
+      isHttpToHttpsEnabled: true,
       loading: {
         getConfiguration: false,
         configureModule: false,
+        getStatus: false,
       },
       error: {
         getConfiguration: "",
         configureModule: "",
         host: "",
-        n8n_ADMIN_USER: "",
-        n8n_ADMIN_PASSWORD: "",
         lets_encrypt: "",
         http2https: "",
+        getStatus: false,
       },
     };
   },
   computed: {
     ...mapState(["instanceName", "core", "appName"]),
+    stillLoading() {
+      return (
+        this.loading.getConfiguration ||
+        this.loading.configureModule ||
+        this.loading.getStatus
+      );
+    },
   },
   created() {
     this.getConfiguration();
+    this.getStatus();
   },
   beforeRouteEnter(to, from, next) {
     next((vm) => {
@@ -141,22 +232,66 @@ export default {
     next();
   },
   methods: {
+    goToCertificates() {
+      this.core.$router.push("/settings/tls-certificates");
+    },
+    async getStatus() {
+      this.loading.getStatus = true;
+      this.error.getStatus = "";
+      const taskAction = "get-status";
+      const eventId = this.getUuid();
+      // register to task error
+      this.core.$root.$once(
+        `${taskAction}-aborted-${eventId}`,
+        this.getStatusAborted
+      );
+      // register to task completion
+      this.core.$root.$once(
+        `${taskAction}-completed-${eventId}`,
+        this.getStatusCompleted
+      );
+      const res = await to(
+        this.createModuleTaskForApp(this.instanceName, {
+          action: taskAction,
+          extra: {
+            title: this.$t("action." + taskAction),
+            isNotificationHidden: true,
+            eventId,
+          },
+        })
+      );
+      const err = res[0];
+      if (err) {
+        console.error(`error creating task ${taskAction}`, err);
+        this.error.getStatus = this.getErrorMessage(err);
+        this.loading.getStatus = false;
+        return;
+      }
+    },
+    getStatusAborted(taskResult, taskContext) {
+      console.error(`${taskContext.action} aborted`, taskResult);
+      this.error.getStatus = this.$t("error.generic_error");
+      this.loading.getStatus = false;
+    },
+    getStatusCompleted(taskContext, taskResult) {
+      this.status = taskResult.output;
+      this.loading.getStatus = false;
+    },
     async getConfiguration() {
       this.loading.getConfiguration = true;
       this.error.getConfiguration = "";
       const taskAction = "get-configuration";
+      const eventId = this.getUuid();
 
       // register to task error
-      this.core.$root.$off(taskAction + "-aborted");
       this.core.$root.$once(
-        taskAction + "-aborted",
+        `${taskAction}-aborted-${eventId}`,
         this.getConfigurationAborted
       );
 
       // register to task completion
-      this.core.$root.$off(taskAction + "-completed");
       this.core.$root.$once(
-        taskAction + "-completed",
+        `${taskAction}-completed-${eventId}`,
         this.getConfigurationCompleted
       );
 
@@ -166,6 +301,7 @@ export default {
           extra: {
             title: this.$t("action." + taskAction),
             isNotificationHidden: true,
+            eventId,
           },
         })
       );
@@ -180,22 +316,24 @@ export default {
     },
     getConfigurationAborted(taskResult, taskContext) {
       console.error(`${taskContext.action} aborted`, taskResult);
-      this.error.getConfiguration = this.core.$t("error.generic_error");
+      this.error.getConfiguration = this.$t("error.generic_error");
       this.loading.getConfiguration = false;
     },
     getConfigurationCompleted(taskContext, taskResult) {
       const config = taskResult.output;
       this.host = config.host;
       this.isLetsEncryptEnabled = config.lets_encrypt;
+      this.isLetsEncryptCurrentlyEnabled = config.lets_encrypt;
       this.isHttpToHttpsEnabled = config.http2https;
+
       this.loading.getConfiguration = false;
       this.focusElement("host");
     },
     validateConfigureModule() {
       this.clearErrors(this);
+      this.validationErrorDetails = [];
 
       let isValidationOk = true;
-
       if (!this.host) {
         this.error.host = "common.required";
 
@@ -204,25 +342,31 @@ export default {
         }
         isValidationOk = false;
       }
-
       return isValidationOk;
     },
     configureModuleValidationFailed(validationErrors) {
       this.loading.configureModule = false;
       let focusAlreadySet = false;
-
       for (const validationError of validationErrors) {
         const param = validationError.parameter;
-        // set i18n error message
-        this.error[param] = "settings." + validationError.error;
-
-        if (!focusAlreadySet) {
-          this.focusElement(param);
-          focusAlreadySet = true;
+        if (validationError.details) {
+          // show inline error notification with details
+          this.validationErrorDetails = validationError.details
+            .split("\n")
+            .filter((detail) => detail.trim() !== "");
+        } else {
+          // set i18n error message
+          this.error[param] = this.$t("settings." + validationError.error);
+          if (!focusAlreadySet) {
+            this.focusElement(param);
+            focusAlreadySet = true;
+          }
         }
       }
     },
     async configureModule() {
+      this.error.test_imap = false;
+      this.error.test_smtp = false;
       const isValidationOk = this.validateConfigureModule();
       if (!isValidationOk) {
         return;
@@ -230,28 +374,25 @@ export default {
 
       this.loading.configureModule = true;
       const taskAction = "configure-module";
+      const eventId = this.getUuid();
 
       // register to task error
-      this.core.$root.$off(taskAction + "-aborted");
       this.core.$root.$once(
-        taskAction + "-aborted",
+        `${taskAction}-aborted-${eventId}`,
         this.configureModuleAborted
       );
 
       // register to task validation
-      this.core.$root.$off(taskAction + "-validation-failed");
       this.core.$root.$once(
-        taskAction + "-validation-failed",
+        `${taskAction}-validation-failed-${eventId}`,
         this.configureModuleValidationFailed
       );
 
       // register to task completion
-      this.core.$root.$off(taskAction + "-completed");
       this.core.$root.$once(
-        taskAction + "-completed",
+        `${taskAction}-completed-${eventId}`,
         this.configureModuleCompleted
       );
-
       const res = await to(
         this.createModuleTaskForApp(this.instanceName, {
           action: taskAction,
@@ -265,6 +406,7 @@ export default {
               instance: this.instanceName,
             }),
             description: this.$t("settings.configuring"),
+            eventId,
           },
         })
       );
@@ -279,7 +421,7 @@ export default {
     },
     configureModuleAborted(taskResult, taskContext) {
       console.error(`${taskContext.action} aborted`, taskResult);
-      this.error.configureModule = this.core.$t("error.generic_error");
+      this.error.configureModule = this.$t("error.generic_error");
       this.loading.configureModule = false;
     },
     configureModuleCompleted() {
@@ -296,5 +438,9 @@ export default {
 @import "../styles/carbon-utils";
 .mg-bottom {
   margin-bottom: $spacing-06;
+}
+
+.maxwidth {
+  max-width: 38rem;
 }
 </style>

@@ -7,35 +7,30 @@
 import os
 import json
 import sys
-# agent is a NethServer library which provides function to communicate with the agent
 import agent
 
+# Try to parse the stdin as JSON.
+# If parsing fails, output everything to stderr
 data = json.load(sys.stdin)
 
 # Setup default values
+host = data["host"]
+h2hs = data.get("http2https", True)
 
-# n8n CSRF settings
-host = data.get("host", "")
-n8n_URL = "https://"+host
-
-# Db Config
-
-POSTGRES_DB = data.get("POSTGRES_DB","n8n")
-POSTGRES_USER = data.get("POSTGRES_USER","n8n")
-POSTGRES_PASSWORD = data.get("POSTGRES_PASSWORD","N@8ni0p$$")
-POSTGRES_NON_ROOT_USER = data.get("POSTGRES_NON_ROOT_USER","n8n")
-POSTGRES_NON_ROOT_PASSWORD = data.get("POSTGRES_NON_ROOT_PASSWORD","N@8ni0p$$")
-
-db_config = {
-    "POSTGRES_ROOT_HOST": "localhost",
-    "POSTGRES_DATABASE": POSTGRES_DB,
-    "POSTGRES_USER": POSTGRES_USER,
-    "POSTGRES_PASSWORD": POSTGRES_PASSWORD,
-    "POSTGRES_NON_ROOT_USER": POSTGRES_NON_ROOT_USER,
-    "POSTGRES_NON_ROOT_PASSWORD": POSTGRES_NON_ROOT_PASSWORD,
-    
+# Configure Traefik route for API
+set_route_data = {
+    'instance': os.environ['MODULE_ID'],
+    'url':  'http://127.0.0.1:' + os.environ["TCP_PORT"],
+    'host': host,
+    'http2https': h2hs,
+    'lets_encrypt_check': True,
+    'lets_encrypt_cleanup': True,
 }
-agent.write_envfile('database.env', db_config)
+if 'lets_encrypt' in data:
+    set_route_data['lets_encrypt'] = data['lets_encrypt']
 
-# Set N8N_HOST
-agent.set_env("N8N_HOST", host)
+agent.set_route(set_route_data)
+
+# Setup Traefik
+agent.set_env("TRAEFIK_HOST", host)
+agent.set_env("TRAEFIK_HTTP2HTTPS", h2hs)
