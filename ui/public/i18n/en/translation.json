@@ -38,7 +38,10 @@
     "instance_configuration": "Configure N8N",
     "domain_already_used_in_traefik": "Domain already used in traefik",
     "host_pattern": "Must be a valid fully qualified domain name",
-    "host_format": "Must be a valid fully qualified domain name"
+    "host_format": "Must be a valid fully qualified domain name",
+    "timezone": "Timezone",
+    "timezone_placeholder": "Choose timezone",
+    "timezone_tooltip": "Timezone for this n8n application"
   },
   "about": {
     "title": "About"

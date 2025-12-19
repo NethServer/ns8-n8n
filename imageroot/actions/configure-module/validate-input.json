@@ -7,12 +7,14 @@
         {
             "host": "n8n.domain.org",
             "http2https": true,
-            "lets_encrypt": true
+            "lets_encrypt": true,
+            "timezone": "UTC"
         }
     ],
     "type": "object",
     "required": [
-        "host"
+        "host",
+        "timezone"
     ],
     "properties": {
         "host": {
@@ -21,15 +23,19 @@
             "format": "hostname",
             "pattern": "\\."
         },
-	"lets_encrypt": {
+        "lets_encrypt": {
             "type": "boolean",
             "title": "Let's Encrypt certificate",
             "description": "Request a valid Let's Encrypt certificate."
         },
-	"http2https": {
+        "http2https": {
             "type": "boolean",
             "title": "HTTP to HTTPS redirection",
             "description": "Redirect all the HTTP requests to HTTPS"
+        },
+        "timezone": {
+            "type": "string",
+            "description": "Timezone"
         }
     }
 }

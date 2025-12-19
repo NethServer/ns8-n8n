@@ -94,6 +94,26 @@
                 $t("settings.enabled")
               }}</template>
             </cv-toggle>
+            <NsComboBox
+              v-model.trim="timezone"
+              :autoFilter="true"
+              :autoHighlight="true"
+              :title="$t('settings.timezone')"
+              :label="$t('settings.timezone_placeholder')"
+              :options="timezoneList"
+              :userInputLabel="core.$t('common.user_input_l')"
+              :acceptUserInput="false"
+              :showItemType="true"
+              :invalid-message="$t(error.timezone)"
+              :disabled="loading.getConfiguration || loading.configureModule"
+              tooltipAlignment="start"
+              tooltipDirection="top"
+              ref="timezone"
+            >
+              <template slot="tooltip">
+                {{ $t("settings.timezone_tooltip") }}
+              </template>
+            </NsComboBox>
             <!-- advanced options 
             <cv-accordion ref="accordion" class="maxwidth mg-bottom">
               <cv-accordion-item :open="toggleAccordion[0]">
@@ -192,18 +212,23 @@ export default {
       isLetsEncryptEnabled: false,
       isLetsEncryptCurrentlyEnabled: false,
       isHttpToHttpsEnabled: true,
+      timezone: "",
       loading: {
         getConfiguration: false,
         configureModule: false,
         getStatus: false,
+        getDefaults: false,
       },
+      timezoneList: [],
       error: {
         getConfiguration: "",
         configureModule: "",
         host: "",
         lets_encrypt: "",
         http2https: "",
-        getStatus: false,
+        timezone: "",
+        getStatus: "",
+        getDefaults: "",
       },
     };
   },
@@ -213,13 +238,15 @@ export default {
       return (
         this.loading.getConfiguration ||
         this.loading.configureModule ||
-        this.loading.getStatus
+        this.loading.getStatus ||
+        this.loading.getDefaults
       );
     },
   },
   created() {
     this.getConfiguration();
     this.getStatus();
+    this.getDefaults();
   },
   beforeRouteEnter(to, from, next) {
     next((vm) => {
@@ -325,6 +352,7 @@ export default {
       this.isLetsEncryptEnabled = config.lets_encrypt;
       this.isLetsEncryptCurrentlyEnabled = config.lets_encrypt;
       this.isHttpToHttpsEnabled = config.http2https;
+      this.timezone = config.timezone;
 
       this.loading.getConfiguration = false;
       this.focusElement("host");
@@ -342,6 +370,12 @@ export default {
         }
         isValidationOk = false;
       }
+
+      if (!this.timezone) {
+        this.error.timezone = "common.required";
+        isValidationOk = false;
+      }
+
       return isValidationOk;
     },
     configureModuleValidationFailed(validationErrors) {
@@ -400,6 +434,7 @@ export default {
             host: this.host,
             lets_encrypt: this.isLetsEncryptEnabled,
             http2https: this.isHttpToHttpsEnabled,
+            timezone: this.timezone,
           },
           extra: {
             title: this.$t("settings.instance_configuration", {
@@ -429,6 +464,60 @@ export default {
 
       // reload configuration
       this.getConfiguration();
+    },
+    async getDefaults() {
+      this.loading.getDefaults = true;
+
+      const taskAction = "get-defaults";
+      const eventId = this.getUuid();
+
+      // register to task error
+      this.core.$root.$once(
+        `${taskAction}-aborted-${eventId}`,
+        this.getDefaultsAborted
+      );
+
+      // register to task completion
+      this.core.$root.$once(
+        `${taskAction}-completed-${eventId}`,
+        this.getDefaultsCompleted
+      );
+
+      const res = await to(
+        this.createModuleTaskForApp(this.instanceName, {
+          action: taskAction,
+          extra: {
+            title: this.$t("action." + taskAction),
+            isNotificationHidden: true,
+            eventId,
+          },
+        })
+      );
+      const err = res[0];
+
+      if (err) {
+        console.error(`error creating task ${taskAction}`, err);
+        this.error.getDefaults = this.getErrorMessage(err);
+        this.loading.getDefaults = false;
+        return;
+      }
+    },
+    getDefaultsAborted(taskResult, taskContext) {
+      console.error(`${taskContext.action} aborted`, taskResult);
+      this.error.getDefaults = this.$t("error.generic_error");
+      this.loading.getDefaults = false;
+    },
+    getDefaultsCompleted(taskContext, taskResult) {
+      this.timezoneList = [];
+      taskResult.output.accepted_timezone_list.forEach((value) =>
+        this.timezoneList.push({
+          name: value,
+          label: value,
+          value: value,
+        })
+      );
+      this.loading.getDefaults = false;
+      this.isProxyInstalled = taskResult.output.proxy_status.proxy_installed;
     },
   },
 };

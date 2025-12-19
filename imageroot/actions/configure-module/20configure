@@ -16,6 +16,7 @@ data = json.load(sys.stdin)
 # Setup default values
 host = data["host"]
 h2hs = data.get("http2https", True)
+timezone = data.get("timezone", "UTC")
 
 # Configure Traefik route for API
 set_route_data = {
@@ -31,6 +32,9 @@ if 'lets_encrypt' in data:
 
 agent.set_route(set_route_data)
 
-# Setup Traefik
+# Set Traefik env vars
 agent.set_env("TRAEFIK_HOST", host)
 agent.set_env("TRAEFIK_HTTP2HTTPS", h2hs)
+
+# Set timezone
+agent.set_env("TIMEZONE",timezone)
