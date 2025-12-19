@@ -29,7 +29,7 @@ podman run \
     --replace --name=restore_db \
     --env-file=database.env \
     --env TZ=UTC \
-    "${POSTGRES_IMAGE}" <  n8n.pg_dump
+    "${POSTGRES_IMAGE}" < n8n.pg_dump
 
 # If the restore is successful, clean up:
-rm -rfv restore/  n8n.pg_dump
+rm -rfv restore/ n8n.pg_dump
