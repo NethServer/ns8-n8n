@@ -24,7 +24,7 @@ Check if matrix is installed correctly
     Set Suite Variable    ${module_id}    ${output.module_id}
 
 Check if n8n can be configured
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host": "n8n.example.com", "http2https": true, "lets_encrypt": false}'
+    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host": "n8n.example.com", "http2https": true, "timezone: "UTC", "lets_encrypt": false}'
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
 
