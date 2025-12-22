@@ -8,11 +8,15 @@
 import sys
 import agent
 import os
+import socket
 
 # Connect the local Redis replica. This is necessary to consistently start
 # the service if the leader node is not reachable:
 rdb = agent.redis_connect(use_replica=True)
 smtp_settings = agent.get_smarthost_settings(rdb)
+
+# Get FQDN
+fqdn = socket.getfqdn()
 
 envfile = "smarthost.env"
 
@@ -27,7 +31,11 @@ with open(envfile + ".tmp", "w") as efp:
         print(f"N8N_SMTP_USER={smtp_settings['username']}", file=efp)
         print(f"N8N_SMTP_PASS={smtp_settings['password']}", file=efp)
         print(f"N8N_SMTP_SSL={'true' if smtp_settings['encrypt_smtp']=='tls' else 'false'}", file=efp)
-        print(f"N8N_SMTP_SENDER=noreply@{smtp_settings.get('host', 'localhost')}", file=efp)
+        print(f"N8N_SMTP_STARTTLS={'true' if smtp_settings['encrypt_smtp']=='starttls' else 'false'}", file=efp)
+        if smtp_settings.get('username'):
+            print(f"N8N_SMTP_SENDER=noreply@{smtp_settings.get('host', 'localhost')}", file=efp)
+        else:
+            print(f"N8N_SMTP_SENDER=noreply@{fqdn}", file=efp)
     else:
         # No SMTP configuration found: disable email notifications
         print(f"N8N_EMAIL_MODE=", file=efp)
@@ -36,6 +44,7 @@ with open(envfile + ".tmp", "w") as efp:
         print(f"N8N_SMTP_USER=", file=efp)
         print(f"N8N_SMTP_PASS=", file=efp)
         print(f"N8N_SMTP_SSL=false", file=efp)
+        print(f"N8N_SMTP_STARTTLS=false", file=efp)
         print(f"N8N_SMTP_SENDER=noreply@localhost", file=efp)
 
 # Commit changes by replacing the existing envfile:
