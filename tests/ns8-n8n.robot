@@ -3,7 +3,7 @@ Library    SSHLibrary
 Resource    api.resource
 
 *** Variables ***
-${MID}            matrix1
+${MID}            n8n1
 
 *** Keywords ***
 Retry test
@@ -16,7 +16,7 @@ Backend URL is reachable
     Should Be Equal As Integers    ${rc}  0
 
 *** Test Cases ***
-Check if matrix is installed correctly
+Check if n8n is installed correctly
     ${output}  ${rc} =    Execute Command    add-module ${IMAGE_URL} 1
     ...    return_rc=True
     Should Be Equal As Integers    ${rc}  0
@@ -24,7 +24,7 @@ Check if matrix is installed correctly
     Set Suite Variable    ${module_id}    ${output.module_id}
 
 Check if n8n can be configured
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host": "n8n.example.com", "http2https": true, "timezone: "UTC", "lets_encrypt": false}'
+    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host": "n8n.example.com", "http2https": true, "timezone": "UTC", "lets_encrypt": false}'
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
 
