@@ -16,5 +16,6 @@ renv = request['environment']
 configure_retval = agent.tasks.run(agent_id=os.environ['AGENT_ID'], action='configure-module', data={
     "host": renv["TRAEFIK_HOST"],
     "http2https": renv["TRAEFIK_HTTP2HTTPS"] == "True",
+    "timezone": renv["TIMEZONE"],
 })
 agent.assert_exp(configure_retval['exit_code'] == 0, "The configure-module subtask failed!")
