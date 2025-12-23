@@ -55,7 +55,7 @@ Check if n8n works as expected
     Retry test    Backend URL is reachable
 
 Verify n8n frontend title
-    ${output} =    Execute Command    curl -s ${backend_url}
+    ${output} =    Execute Command    sleep 10 && curl -s ${backend_url}
     Should Contain    ${output}    <title>n8n.io - Workflow Automation</title>
 
 Check if n8n is removed correctly
