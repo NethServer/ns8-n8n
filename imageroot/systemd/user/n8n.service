@@ -23,6 +23,7 @@ ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/n8n.pid \
     --pod-id-file %t/n8n.pod-id \
     --name n8n \
     --publish 127.0.0.1:${TCP_PORT}:5678 \
+    --network=slirp4netns:allow_host_loopback=true \
     --replace
 ExecStart=/usr/bin/podman pod start --pod-id-file %t/n8n.pod-id
 ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/n8n.pod-id -t 10
