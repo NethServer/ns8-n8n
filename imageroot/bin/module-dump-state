@@ -8,5 +8,4 @@
 set -e
 
 echo "Dumping n8n postgres database"
-podman exec n8n-pgsql pg_dump -U n8n --format=c  n8n > n8n.pg_dump
-echo "Database Dummped Succesfully"
+podman exec n8n-pgsql pg_dump -U postgres --format=c  n8n > n8n.pg_dump

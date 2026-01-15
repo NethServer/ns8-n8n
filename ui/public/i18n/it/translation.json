@@ -31,6 +31,9 @@
         "disabled": "Disabled",
         "enabled": "Enabled",
         "http_to_https": "http2https",
+        "timezone": "Fuso orario",
+        "timezone_placeholder": "Scegli timezone",
+        "timezone_tooltip": "Timezone per questa applicazione n8n",
         "test_field": "Campo di test"
     },
     "error": {
