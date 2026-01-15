@@ -5,6 +5,7 @@ on:
 
 permissions:
   packages: write
+  security-events: write
 
 jobs:
   publish-images:
