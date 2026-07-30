@@ -29,7 +29,7 @@ buildah run \
     --workingdir=/usr/src/ui \
     --env="NODE_OPTIONS=--openssl-legacy-provider" \
     nodebuilder-ns8-n8n \
-    sh -c "yarn install && yarn build"
+    sh -c "corepack enable && yarn install && yarn build"
 
 # Add imageroot directory to the container image
 buildah add "${container}" imageroot /imageroot
@@ -39,7 +39,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
-	--label="org.nethserver.min-core=3.12.4-0" \
+	--label="org.nethserver.min-core=3.20.1" \
     --label="org.nethserver.images=docker.io/library/postgres:16.13 docker.io/n8nio/n8n:2.13.4 docker.io/n8nio/runners:2.15.0" \
     --label="org.nethserver.tcp-ports-demand=1" \
     "${container}"
