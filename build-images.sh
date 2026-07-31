@@ -39,8 +39,8 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
-	--label="org.nethserver.min-core=3.20.1" \
-    --label="org.nethserver.images=docker.io/library/postgres:16.13 docker.io/n8nio/n8n:2.13.4 docker.io/n8nio/runners:2.15.0" \
+	  --label="org.nethserver.min-core=3.20.1" \
+    --label="org.nethserver.images=docker.io/library/postgres:18.4 docker.io/n8nio/n8n:2.13.4 docker.io/n8nio/runners:2.15.0" \
     --label="org.nethserver.tcp-ports-demand=1" \
     "${container}"
 # Commit the image
