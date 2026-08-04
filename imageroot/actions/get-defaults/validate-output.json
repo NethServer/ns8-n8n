@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "n8n defaults",
+  "$id": "http://nethserver.org/json-schema/task/output/n8n/get-defaults",
+  "description": "Get n8n default configuration values",
+  "examples": [
+    {
+      "accepted_timezone_list": [
+        "Europe/Amsterdam",
+        "Europe/Berlin",
+        "Europe/Brussels",
+        "Europe/London"
+      ],
+      "local_timezone": "Europe/Rome"
+    },
+    {
+      "accepted_timezone_list": [
+        "Europe/Amsterdam",
+        "Europe/Berlin"
+      ],
+      "local_timezone": "UTC"
+    }
+  ],
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["accepted_timezone_list", "local_timezone"],
+  "properties": {
+    "accepted_timezone_list": {
+      "description": "List of accepted timezones",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "local_timezone": {
+      "description": "The current system timezone",
+      "type": "string"
+    }
+  }
+}

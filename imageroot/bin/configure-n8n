@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2025 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+import os
+import secrets
+import string
+import agent
+
+def generate_secret(length=32):
+    """Generate a random secret string"""
+    alphabet = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+def substitute_env_vars(content, env_vars):
+    """Replace ${VAR} patterns with environment variable values"""
+    for key, value in env_vars.items():
+        content = content.replace(f'${{{key}}}', str(value))
+    return content
+
+# Generate postgres database environment file if it doesn't exist
+database_file = 'database.env'
+if not os.path.exists(database_file):
+    database_env = {
+        "POSTGRES_DB": "n8n",
+        "POSTGRES_PASSWORD": generate_secret()
+    }
+    agent.write_envfile(database_file, database_env)
+
+# Generate secret environment file if it doesn't exist
+secret_file = 'secret.env'
+if not os.path.exists(secret_file):
+    secret_env = {
+        "N8N_RUNNERS_AUTH_TOKEN": generate_secret()
+    }
+    agent.write_envfile(secret_file, secret_env)

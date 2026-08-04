@@ -11,10 +11,9 @@ set -e
 # Prepare variables for later use
 images=()
 # The image will be pushed to GitHub container registry
-repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
+repobase="${REPOBASE:-ghcr.io/nethserver}"
 # Configure the image name
 reponame="n8n"
-N8N_VERSION="1.57.0"
 
 # Create a new empty container image
 container=$(buildah from scratch)
@@ -30,7 +29,7 @@ buildah run \
     --workingdir=/usr/src/ui \
     --env="NODE_OPTIONS=--openssl-legacy-provider" \
     nodebuilder-ns8-n8n \
-    sh -c "yarn install && yarn build"
+    sh -c "corepack enable && yarn install && yarn build"
 
 # Add imageroot directory to the container image
 buildah add "${container}" imageroot /imageroot
@@ -40,7 +39,8 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
-    --label="org.nethserver.images=docker.io/library/redis:7.2.3-bookworm docker.io/library/postgres:15.5-bookworm docker.io/n8nio/n8n:${N8N_VERSION}" \
+	  --label="org.nethserver.min-core=3.20.1" \
+    --label="org.nethserver.images=docker.io/library/postgres:18.4 docker.io/n8nio/n8n:2.13.4 docker.io/n8nio/runners:2.15.0" \
     --label="org.nethserver.tcp-ports-demand=1" \
     "${container}"
 # Commit the image

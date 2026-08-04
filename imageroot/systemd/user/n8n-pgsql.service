@@ -1,3 +1,13 @@
+#
+# Copyright (C) 2023 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# This systemd unit starts a n8n-pgsql instance using Podman.
+# Most parts of this file come from podman-generate-systemd.
+#
+
 [Unit]
 Description=Podman n8n-pgsql.service
 BindsTo=n8n.service
@@ -10,10 +20,12 @@ Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/n8n-pgsql.pid %t/n8n-pgsql.ctr-id
 ExecStartPre=/bin/mkdir -p %S/state/restore/
+ExecStartPre=-runagent configure-n8n
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/n8n-pgsql.pid \
     --cidfile %t/n8n-pgsql.ctr-id --cgroups=no-conmon --pod-id-file %t/n8n.pod-id \
-    --replace -d --name n8n-pgsql --env-file=%S/state/database.env \
-    --volume=db_storage:/var/lib/postgresql/data:Z \
+    --replace -d --name n8n-pgsql \
+    --env-file=%S/state/database.env \
+    --volume pgsql-data:/var/lib/postgresql/data:Z \
     ${POSTGRES_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/n8n-pgsql.ctr-id -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/n8n-pgsql.ctr-id

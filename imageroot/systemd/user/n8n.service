@@ -10,8 +10,8 @@
 
 [Unit]
 Description=Podman n8n.service
-Requires=n8n-redis.service n8n-pgsql.service n8n-server.service
-Before=n8n-redis.service n8n-pgsql.service n8n-server.service
+Requires=n8n-pgsql.service n8n-server.service n8n-runners.service
+Before=n8n-pgsql.service n8n-server.service n8n-runners.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -23,6 +23,7 @@ ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/n8n.pid \
     --pod-id-file %t/n8n.pod-id \
     --name n8n \
     --publish 127.0.0.1:${TCP_PORT}:5678 \
+    --network=slirp4netns:allow_host_loopback=true \
     --replace
 ExecStart=/usr/bin/podman pod start --pod-id-file %t/n8n.pod-id
 ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/n8n.pod-id -t 10
