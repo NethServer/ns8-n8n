@@ -24,7 +24,7 @@ container=$(buildah from scratch)
 # Reuse existing nodebuilder-kickstart container, to speed up builds
 if ! buildah containers --format "{{.ContainerName}}" | grep -q nodebuilder-ns8-n8n; then
     echo "Pulling NodeJS runtime..."
-    buildah from --name nodebuilder-ns8-n8n -v "${PWD}:/usr/src:Z" docker.io/library/node:26.13.0-slim
+    buildah from --name nodebuilder-ns8-n8n -v "${PWD}:/usr/src:Z" docker.io/library/node:26.13.1-slim
     buildah run nodebuilder-ns8-n8n sh -c "npm install -g corepack@${corepack_version} && corepack enable"
 fi
 
