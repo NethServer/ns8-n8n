@@ -25,19 +25,21 @@ Qualify the module on a disposable CI node
     ${host}=    Set Variable    ${module}.example.com
     ${private_dir}=    Evaluate    tempfile.mkdtemp(prefix="n8n-test-")    modules=tempfile
     TRY
-        Run task    module/${module}/configure-module
-        ...    {"host":"${host}","timezone":"UTC","http2https":true,"lets_encrypt":false}    decode_json=${False}
-        Wait Until Keyword Succeeds    2 min    3 s    Check Running Module    ${module}    ${host}
         IF    $RUN_UI_TESTS.lower() == 'true'
             Import Resource    ${CURDIR}/../skills/ns8-n8n-tests/check.resource
             Run Browser Checks    seed    ${module}    ${host}    ${private_dir}/fixture.json
+        ELSE
+            Run task    module/${module}/configure-module
+            ...    {"host":"${host}","timezone":"UTC","http2https":true,"lets_encrypt":false}    decode_json=${False}
         END
+        Wait Until Keyword Succeeds    2 min    3 s    Check Running Module    ${module}    ${host}
         IF    '${SCENARIO}' == 'update'
             Checked Command    update-module ${IMAGE_URL} ${module}
         ELSE
             Checked Command    runagent -m ${module} systemctl --user restart n8n.service
         END
         Wait Until Keyword Succeeds    2 min    3 s    Check Running Module    ${module}    ${host}
+        Check Candidate Images    ${module}
         Checked Command    runagent -m ${module} sh -c 'test -r "$AGENT_INSTALL_DIR/skills/ns8-n8n-tests/check.resource" && test -r "$AGENT_INSTALL_DIR/skills/ns8-n8n-tests/SKILL.md"'
         IF    $RUN_UI_TESTS.lower() == 'true'
             Run Browser Checks    verify    ${module}    ${host}    ${private_dir}/fixture.json
@@ -72,6 +74,16 @@ Check Running Module
     Checked Command    curl -fksS --resolve '${host}:443:127.0.0.1' https://${host}/healthz/readiness
     ${redirect}=    Checked Command    curl -sS -o /dev/null -w '\%{redirect_url}' --resolve '${host}:80:127.0.0.1' http://${host}/
     Should Be Equal    ${redirect}    https://${host}/
+
+Check Candidate Images
+    [Arguments]    ${module}
+    ${images}=    Checked Command    podman image inspect --format '{{index .Labels "org.nethserver.images"}}' ${IMAGE_URL}
+    ${pins}=    Evaluate    {ref.rsplit('/', 1)[-1].split(':')[0]: ref for ref in $images.split()}
+    FOR    ${container}    ${name}    IN    n8n-pgsql    postgres    n8n-server    n8n    n8n-runners    runners
+        ${expected}=    Checked Command    runagent -m ${module} podman image inspect --format '{{.Id}}' ${pins}[${name}]
+        ${running}=    Checked Command    runagent -m ${module} podman container inspect --format '{{.Image}}' ${container}
+        Should Be Equal    ${running}    ${expected}
+    END
 
 Run Browser Checks
     [Arguments]    ${phase}    ${module}    ${host}    ${fixture}
