@@ -21,22 +21,21 @@ corepack_version=0.36.0
 # Create a new empty container image
 container=$(buildah from scratch)
 
-# Reuse existing nodebuilder-kickstart container, to speed up builds
-if ! buildah containers --format "{{.ContainerName}}" | grep -q nodebuilder-ns8-n8n; then
-    echo "Pulling NodeJS runtime..."
-    buildah from --name nodebuilder-ns8-n8n -v "${PWD}:/usr/src:Z" docker.io/library/node:26.13.0-slim
-    buildah run nodebuilder-ns8-n8n sh -c "npm install -g corepack@${corepack_version} && corepack enable"
-fi
+# A fresh builder uses this checkout's Node and Corepack pins.
+builder=$(buildah from -v "${PWD}:/usr/src:Z" docker.io/library/node:26.13.1-slim)
+trap 'buildah rm "${builder}" >/dev/null' EXIT
+buildah run "${builder}" sh -c "npm install -g corepack@${corepack_version} && corepack enable"
 
 echo "Build static UI files with node..."
 buildah run \
     --workingdir=/usr/src/ui \
     --env="NODE_OPTIONS=--openssl-legacy-provider" \
-    nodebuilder-ns8-n8n \
-    sh -c "yarn install && yarn build"
+    "${builder}" \
+    sh -c "yarn install --immutable && yarn build"
 
 # Add imageroot directory to the container image
 buildah add "${container}" imageroot /imageroot
+buildah add "${container}" skills/ns8-n8n-tests /imageroot/skills/ns8-n8n-tests
 buildah add "${container}" ui/dist /ui
 # Setup the entrypoint, ask to reserve one TCP port with the label and set a rootless container
 buildah config --entrypoint=/ \
@@ -44,7 +43,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
 	--label="org.nethserver.min-core=3.20.1" \
-    --label="org.nethserver.images=docker.io/library/postgres:16.14 docker.io/n8nio/n8n:2.45.3 docker.io/n8nio/runners:2.45.3" \
+    --label="org.nethserver.images=docker.io/library/postgres:16.16 docker.io/n8nio/n8n:2.48.6 docker.io/n8nio/runners:2.48.6" \
     --label="org.nethserver.tcp-ports-demand=1" \
     "${container}"
 # Commit the image

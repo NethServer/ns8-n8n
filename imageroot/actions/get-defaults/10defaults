@@ -9,12 +9,9 @@ import json
 import sys
 import subprocess
 import os
-import agent
+from zoneinfo import available_timezones
 
-timezones_directory = "/usr/share/zoneinfo/posix/"
-command = "find *  -type f -or -type l"
-# Get the list of timezones
-accepted_timezone_list = subprocess.check_output(command, cwd=timezones_directory, text=True, shell=True).splitlines()
+accepted_timezone_list = sorted(available_timezones())
 
 # Get local timezone
 # Works for both Rocky Linux and Debian systems

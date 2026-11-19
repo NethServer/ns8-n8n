@@ -76,11 +76,9 @@ To uninstall the instance:
 
 ## Testing
 
-Test the module using the `test-module.sh` script:
+The [ns8-n8n-tests skill](skills/ns8-n8n-tests/SKILL.md) exercises the cluster administration interface, the n8n editor, task runners and authenticated webhooks. Use its seed and verify commands on the same instance to test an upgrade. Keep the private fixture state outside CI artifacts.
 
-    ./test-module.sh <NODE_ADDR> ghcr.io/nethserver/n8n:latest
-
-The tests are made using [Robot Framework](https://robotframework.org/)
+The Test module workflow runs the Robot suite on disposable NS8 nodes. It tests a clean install and an upgrade from the numbered baseline release. The suite removes the instance it creates on each disposable node.
 
 ## UI translation
 
