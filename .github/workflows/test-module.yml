@@ -22,9 +22,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - distro: rocky9
-            scenario: install
           - distro: debian13
+            scenario: install
+          - distro: rocky9
             scenario: update
     permissions:
       contents: write
